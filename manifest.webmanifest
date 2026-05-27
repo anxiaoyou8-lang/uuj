@@ -1,0 +1,17 @@
+{
+  "name": "XSJ",
+  "short_name": "XSJ",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#eef2f7",
+  "description": "A mobile-first AI companion shell with chats, apps, and memory.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
