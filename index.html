@@ -8,14 +8,21 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="XSJ" />
     <meta name="format-detection" content="telephone=no" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152.png" />
-    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120.png" />
+    
+    <!-- 改为相对路径 ↓ -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="apple-touch-icon-120.png" />
+    <!-- 如果你还有一个默认的无尺寸 apple-touch-icon，可以保留这行 ↓ -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    
     <title>幽幽机</title>
+    
+    <!-- 这两个资源本身就是相对路径，无需修改 -->
     <script type="module" crossorigin src="assets/index-CylKZ71X.js"></script>
     <link rel="stylesheet" crossorigin href="assets/index-m-AmiW6c.css">
   </head>
