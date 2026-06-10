@@ -1,21 +1,21 @@
 {
-  "name": "XSJ",
-  "short_name": "XSJ",
-  "start_url": "/",
-  "scope": "/",
+  "name": "幽幽机",
+  "short_name": "幽幽机",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "background_color": "#eef2f7",
   "theme_color": "#eef2f7",
   "description": "A mobile-first AI companion shell with chats, apps, and memory.",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
