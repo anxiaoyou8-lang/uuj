@@ -1,0 +1,26 @@
+# Cloudflare Pages 响应头。放在 public/ 里会被原样拷进 dist/。
+#
+# GitHub Pages 不认这个文件,它只是被一起传上去、不生效,无害。
+#
+# 故意没有配套的 _redirects:这个应用没有路由(没有 react-router,
+# 从不 pushState 路径),用户能抵达的 URL 只有 /、/?activity_id=...
+# 和 /storage-recovery.html,全都能直接命中真实文件。而 base 是相对
+# 路径('./'),一旦加了 /* /index.html 200 的 SPA fallback,访问
+# /a/b 会拿到 index.html 但资源基准变成 /a/,assets 全 404 白屏,
+# 连 sw.js 都会被解析到 /a/sw.js 上去,推送直接废掉。
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Content-Security-Policy: frame-ancestors 'none'
+
+# Service Worker 脚本不能被缓存拖住,否则新版本迟迟不接管。
+/sw.js
+  Cache-Control: no-cache
+
+# 文件名带内容哈希,可以放心长缓存。
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -1,12 +1,13 @@
 {
   "name": "幽幽机",
   "short_name": "幽幽机",
+  "lang": "zh-CN",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "background_color": "#eef2f7",
   "theme_color": "#eef2f7",
-  "description": "A mobile-first AI companion shell with chats, apps, and memory.",
+  "description": "陪你聊天、记事、一起听歌的手机式 AI 陪伴壳。",
   "icons": [
     {
       "src": "icon-192.png",
