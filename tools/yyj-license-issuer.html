@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>幽幽机 · 酒馆导入解锁码签发</title>
+  <style>
+    :root { color-scheme: light dark; font: 15px/1.55 system-ui,sans-serif; }
+    body { margin: 0; background: #11121a; color: #f5f5fa; }
+    main { box-sizing: border-box; width: min(680px,100%); min-height: 100vh; margin: auto; padding: 40px 20px; }
+    h1 { margin: 0 0 8px; font-size: 26px; } p { color: #b9b9c8; }
+    label { display: grid; gap: 7px; margin: 18px 0; }
+    input,textarea,button { box-sizing: border-box; width: 100%; border: 1px solid #37384a; border-radius: 12px; padding: 12px; background: #1a1b27; color: inherit; font: inherit; }
+    input[type=file] { padding: 10px; } input[type=checkbox] { width: auto; }
+    .check { display: flex; align-items: flex-start; gap: 10px; }
+    button { border: 0; background: #7667ed; font-weight: 700; cursor: pointer; }
+    textarea { min-height: 140px; font-family: ui-monospace,monospace; word-break: break-all; }
+    #status { min-height: 24px; color: #ffb9b9; }
+    .notice { border: 1px solid #37384a; border-radius: 14px; padding: 14px; background: #171822; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>酒馆导入解锁码签发</h1>
+  <p>本页只在浏览器本地签名，不上传或保存私钥。请勿公开私钥文件。</p>
+  <label>玩家设备码<input id="device" autocomplete="off" placeholder="粘贴玩家从幽幽机复制的设备码" /></label>
+  <label>许可证私钥（PKCS#8 PEM）<input id="key" type="file" accept=".pem,text/plain" /></label>
+  <label>有效天数（留空表示长期有效）<input id="days" type="number" min="1" step="1" placeholder="例如 365" /></label>
+  <div class="notice">
+    <label class="check"><input id="permission" type="checkbox" /><span>我已确认该玩家要导入的酒馆资源经过原作者允许。</span></label>
+    <label class="check"><input id="disclaimer" type="checkbox" /><span>我已向玩家说明：导入内容的版权、合规与使用后果由提供者和使用者自行承担；幽幽机只提供本地格式转换能力。</span></label>
+  </div>
+  <button id="issue" type="button">生成设备专属解锁码</button>
+  <p id="status" role="alert"></p>
+  <label>解锁码<textarea id="result" readonly placeholder="生成后复制给玩家"></textarea></label>
+  <button id="copy" type="button">复制解锁码</button>
+</main>
+<script>
+  const DISCLAIMER_VERSION = '2026-09-15';
+  const $ = (id) => document.getElementById(id);
+  const b64url = (bytes) => {
+    let binary = ''; bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+    return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/g, '');
+  };
+  const pemBytes = (text) => {
+    const base64 = text.replace(/-----BEGIN [^-]+-----|-----END [^-]+-----|\s+/g, '');
+    const binary = atob(base64); return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  };
+  $('issue').onclick = async () => {
+    $('status').textContent = '';
+    try {
+      const deviceId = $('device').value.trim();
+      const file = $('key').files[0];
+      if (!deviceId) throw new Error('请填写设备码');
+      if (!file) throw new Error('请选择许可证私钥');
+      if (!$('permission').checked || !$('disclaimer').checked) throw new Error('必须确认作者许可和免责声明');
+      const issuedAt = new Date();
+      const days = Number($('days').value);
+      const payload = {
+        type: 'youyouji-license', version: 1, capability: 'tavern-import', deviceId,
+        issuedAt: issuedAt.toISOString(),
+        expiresAt: Number.isFinite(days) && days > 0 ? new Date(issuedAt.getTime() + days * 86400000).toISOString() : null,
+        authorPermissionConfirmed: true, disclaimerVersion: DISCLAIMER_VERSION,
+      };
+      const payloadPart = b64url(new TextEncoder().encode(JSON.stringify(payload)));
+      const key = await crypto.subtle.importKey('pkcs8', pemBytes(await file.text()), { name: 'RSA-PSS', hash: 'SHA-256' }, false, ['sign']);
+      const signature = await crypto.subtle.sign({ name: 'RSA-PSS', saltLength: 32 }, key, new TextEncoder().encode(payloadPart));
+      $('result').value = `${payloadPart}.${b64url(new Uint8Array(signature))}`;
+      $('status').textContent = '已生成。此解锁码只能在对应设备使用。';
+    } catch (error) { $('status').textContent = error instanceof Error ? error.message : '生成失败'; }
+  };
+  $('copy').onclick = async () => {
+    if (!$('result').value) return;
+    await navigator.clipboard.writeText($('result').value);
+    $('status').textContent = '已复制。';
+  };
+</script>
+</body>
+</html>

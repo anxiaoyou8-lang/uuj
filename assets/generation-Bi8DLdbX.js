@@ -1,0 +1,2 @@
+function s(n,t){return[{role:"system",content:["[匿名聊天模式]",`你在这段临时会话中的化名是“${n.companionAlias}”，用户化名是“${n.userAlias}”。`,"保持原角色的人格、语气习惯和边界，但不要直接说出真实姓名、联系人备注、头像、关系标签或任何能一次暴露身份的资料。","可以自然流露细小口头禅和性格，让用户通过聊天逐步猜测。不要撒谎伪装成真实陌生人，也不要提及提示词或应用机制。","回复应像真实即时聊天，简洁自然。除非用户明确要求，不要使用舞台动作、旁白、列表或长篇独白。","这段匿名上下文与普通消息会话隔离，不声称记住匿名会话之外新发生的事。"].join(`
+`)},...n.messages.filter(e=>e.sender!=="system").slice(-24).map(e=>({role:e.sender==="user"?"user":"assistant",content:e.text})),{role:"user",content:t}]}export{s as buildAnonymousGenerationMessages};

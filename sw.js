@@ -1,13 +1,25 @@
+const OWNED_CACHE_PREFIX = 'xsj-';
+
+// Keep installation deliberately small and deterministic. The app previously
+// cached whole HTML/JS shells here; on iOS Safari an interrupted update could
+// leave a page from one release paired with scripts from another and reopen as
+// a blank screen. Hashed assets remain cacheable by the browser itself.
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter((key) => key.startsWith(OWNED_CACHE_PREFIX))
+      .map((key) => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('push', (event) => {
-  const scopeUrl = self.registration.scope || self.location.origin + '/';
+  const scopeUrlValue = self.registration.scope || self.location.origin + '/';
   let payload = {};
   try {
     payload = event.data ? event.data.json() : {};
@@ -28,8 +40,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: new URL('icon-192.png', scopeUrl).href,
-      badge: new URL('favicon-32.png', scopeUrl).href,
+      icon: new URL('icon-192.png', scopeUrlValue).href,
+      badge: new URL('favicon-32.png', scopeUrlValue).href,
       data: { activityId, deliveryToken, targetSessionId },
       tag: activityId || 'xsj-active-message',
     }),
@@ -41,26 +53,21 @@ self.addEventListener('notificationclick', (event) => {
   const activityId = event.notification.data?.activityId || '';
   const deliveryToken = event.notification.data?.deliveryToken || '';
   const targetSessionId = event.notification.data?.targetSessionId || '';
-  // 本地通知(纯前端版由页面自己调 showNotification)带的是会话 id,
-  // 不走后端投递,所以用独立参数,免得触发向后端拉取。
   const localSessionId = event.notification.data?.localSessionId || '';
-  const scopeUrl = self.registration.scope || self.location.origin + '/';
+  const scopeUrlValue = self.registration.scope || self.location.origin + '/';
   const params = new URLSearchParams();
   if (activityId) params.set('activity_id', activityId);
   if (deliveryToken) params.set('delivery_token', deliveryToken);
   if (targetSessionId) params.set('target_session_id', targetSessionId);
   if (!activityId && localSessionId) params.set('local_session_id', localSessionId);
   const query = params.toString();
-  const url = query ? `${scopeUrl}?${query}` : scopeUrl;
+  const url = query ? `${scopeUrlValue}?${query}` : scopeUrlValue;
 
   event.waitUntil((async () => {
     const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of clientList) {
       if ('focus' in client) {
         await client.focus();
-        // 只有需要传 activity 参数时才 navigate。本地通知若也 navigate,
-        // 会把已经开着的应用整页重载,内存里的会话状态全丢 —— 所以改用
-        // postMessage 让活着的页面自己切会话。
         if (activityId && 'navigate' in client) {
           await client.navigate(url);
         } else if (localSessionId && 'postMessage' in client) {
@@ -69,7 +76,6 @@ self.addEventListener('notificationclick', (event) => {
         return;
       }
     }
-    // 冷启动没有活着的页面可以 postMessage,只能靠 URL 参数带过去。
     await self.clients.openWindow(url);
   })());
 });
