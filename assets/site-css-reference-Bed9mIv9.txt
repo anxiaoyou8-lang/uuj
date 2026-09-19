@@ -27162,6 +27162,39 @@ html.platform-ios .voice-send-textarea { font-size: 17px !important; }
   padding: 2px 0 12px;
 }
 
+.memory-local-recovery-tools,
+.memory-rebuild-progress,
+.memory-rebuild-progress__actions {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.memory-local-recovery-tools { margin-top: 12px; }
+.memory-rebuild-progress { margin: 14px; color: var(--memory-ink); }
+.memory-rebuild-progress h3 { margin: 0; font-size: 18px; }
+.memory-rebuild-progress p { margin: 0; font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; }
+.memory-rebuild-progress [role="status"] { display: grid; gap: 10px; }
+.memory-local-recovery-tools .mini-action,
+.memory-rebuild-progress .mini-action {
+  width: 100%;
+  min-height: 44px;
+  height: auto;
+  border-radius: 14px;
+  white-space: normal;
+  text-align: center;
+  justify-content: center;
+}
+.memory-recovery-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0;
+  line-height: 1.65;
+}
+.memory-recovery-confirm input { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 3px; }
+.memory-rebuild-progress progress { width: 100%; height: 12px; accent-color: var(--memory-accent); }
+
 .memory-hub-section {
   display: grid;
   gap: 8px;
