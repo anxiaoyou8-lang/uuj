@@ -1,5 +1,43 @@
 const OWNED_CACHE_PREFIX = 'xsj-';
 
+// Per-message receipts survive dismissing a banner, SW restarts and push retries.
+async function showMessageNotification(title, options) {
+  const id = options.data?.messageId;
+  if (!id) { await self.registration.showNotification(title, options); return true; }
+  const db = await new Promise((resolve, reject) => {
+    const request = indexedDB.open('xsj-notification-receipts-v1', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('receipts');
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  try {
+    const claimed = await new Promise((resolve, reject) => {
+      const tx = db.transaction('receipts', 'readwrite'), store = tx.objectStore('receipts');
+      let accepted = false;
+      const get = store.get(id);
+      get.onsuccess = () => {
+        if (!get.result || (get.result.state !== 'shown' && get.result.at < Date.now() - 60000)) {
+          store.put({ state: 'pending', at: Date.now() }, id); accepted = true;
+        }
+      };
+      tx.oncomplete = () => resolve(accepted); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
+    if (!claimed) return true;
+    await self.registration.showNotification(title, { ...options, tag: 'xsj-message-' + id });
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('receipts', 'readwrite');
+      tx.objectStore('receipts').put({ state: 'shown', at: Date.now() }, id);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+    });
+    return true;
+  } finally { db.close(); }
+}
+self.addEventListener('message', event => {
+  if (event.data?.type !== 'xsj-notify-message') return;
+  event.waitUntil(showMessageNotification(event.data.title, event.data.options)
+    .then(ok => event.ports[0]?.postMessage({ ok })).catch(() => event.ports[0]?.postMessage({ ok: false })));
+});
+
 // Keep installation deliberately small and deterministic. The app previously
 // cached whole HTML/JS shells here; on iOS Safari an interrupted update could
 // leave a page from one release paired with scripts from another and reopen as
@@ -36,13 +74,14 @@ self.addEventListener('push', (event) => {
   const activityId = typeof payload.activity_id === 'string' ? payload.activity_id : '';
   const deliveryToken = typeof payload.delivery_token === 'string' ? payload.delivery_token : '';
   const targetSessionId = typeof payload.target_session_id === 'string' ? payload.target_session_id : '';
+  const messageId = typeof payload.message_id === 'string' ? payload.message_id : '';
 
   event.waitUntil(
-    self.registration.showNotification(title, {
+    showMessageNotification(title, {
       body,
       icon: new URL('icon-192.png', scopeUrlValue).href,
       badge: new URL('favicon-32.png', scopeUrlValue).href,
-      data: { activityId, deliveryToken, targetSessionId },
+      data: { activityId, deliveryToken, targetSessionId, messageId },
       tag: activityId || 'xsj-active-message',
     }),
   );
