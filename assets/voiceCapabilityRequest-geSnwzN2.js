@@ -1,0 +1,1 @@
+async function e(e,t,o){const r=await fetch(`${e.trim().replace(/\/+$/,"")}/user/tts-settings`,{headers:{Authorization:`Bearer ${t.trim()}`},signal:o,cache:"no-store"});if(!r.ok)throw new Error("语音配置读取失败");const i=await r.json();return{configured:!0===i.configured,voiceId:"string"==typeof i.voice_id?i.voice_id:"",known:!0}}export{e as readVoiceCapability};

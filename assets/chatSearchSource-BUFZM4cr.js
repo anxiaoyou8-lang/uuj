@@ -1,0 +1,1 @@
+function e(e){return JSON.stringify(e.filter(e=>!("self"!==e.sender||"system"===e.source||e.deletedAt||e.recalledAt||"call"===e.kind||e.call||e.toolResultV1)).slice(-12).map(e=>[e.id,e.text,e.createdAt]))}export{e as chatSearchSource};

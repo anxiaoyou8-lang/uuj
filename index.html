@@ -8,6 +8,81 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="幽幽机" />
     <meta name="format-detection" content="telephone=no" />
+    <script id="xsj-startup-guard">
+      // Independent of the module bundle and storage. Never reset, repair,
+      // migrate or clear data here, and never boot App with fallback data.
+      (() => {
+        let phase = 'resources';
+        let since = Date.now();
+        let finished = false;
+        let panel;
+        let timer;
+        const labels = {
+          resources: ['正在加载程序', 'RESOURCE-WAIT'],
+          'local-data': ['正在读取本机数据', 'LOCAL-DATA-WAIT'],
+          memory: ['正在读取记忆', 'MEMORY-WAIT'],
+          render: ['正在显示界面', 'RENDER-WAIT'],
+          failed: ['本机数据读取未完成', 'LOCAL-DATA-FAILED'],
+          'resource-failed': ['程序资源加载失败', 'RESOURCE-FAILED'],
+          'runtime-failed': ['启动程序遇到异常', 'STARTUP-ERROR'],
+        };
+        function tick() {
+          if (finished) return;
+          const host = document.getElementById('xsj-startup');
+          if (!host) return;
+          if (!panel) {
+            panel = host.attachShadow({ mode: 'open' });
+            panel.innerHTML = '<style>:host{color-scheme:light}*{box-sizing:border-box}section{font:16px/1.6 system-ui,sans-serif;color:#292929;background:#faf9f6;min-height:100%;padding:calc(40px + env(safe-area-inset-top,0px)) 24px 32px;overflow-wrap:anywhere}h1{font-size:22px;margin:0 0 20px}p{margin:12px 0}small{color:#666}button{font:inherit;padding:10px 16px;border:1px solid #d3d0cc;border-radius:12px;background:white;color:#292929;min-height:44px;cursor:pointer}[hidden]{display:none!important}</style><section aria-label="启动状态"><h1>幽幽机</h1><p id="status" role="status" aria-live="polite"></p><div id="help" hidden><p>启动比平时久一些。可以先关闭其他幽幽机页面，再重新载入。</p><p>此页面不会清除聊天、记忆或登录数据。请不要卸载 PWA 或清除网站数据。</p><button type="button">重新载入（保留数据）</button><p><small id="code"></small></p></div></section>';
+            panel.querySelector('button').addEventListener('click', () => {
+              // Cache-bust only the HTML URL; keep the origin, auth callback
+              // parameters and all storage. No automatic retry/reload loop.
+              const url = new URL(location.href);
+              url.searchParams.set('_xsj_boot_retry', String(Date.now()));
+              location.replace(url.href);
+            });
+          }
+          const root = document.getElementById('root');
+          const content = root && root.firstElementChild;
+          if (content) {
+            const style = getComputedStyle(content);
+            const rect = content.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0 && style.display !== 'none'
+              && style.visibility !== 'hidden' && Number(style.opacity) > 0) {
+              finished = true;
+              host.style.setProperty('display', 'none', 'important');
+              clearInterval(timer);
+              return;
+            }
+          }
+          const label = labels[phase];
+          const slow = Date.now() - since >= 10000 || /failed$/.test(phase);
+          panel.getElementById('status').textContent = label[0] + '…';
+          panel.getElementById('help').hidden = !slow;
+          // Fixed diagnostic codes only: no chat, user IDs, URL queries or tokens.
+          panel.getElementById('code').textContent = '诊断码：' + label[1] + ' · 启动检查 20261016';
+        }
+        window.addEventListener('xsj-startup-phase', event => {
+          if (finished || !Object.prototype.hasOwnProperty.call(labels, event.detail)) return;
+          phase = event.detail;
+          since = Date.now();
+          tick();
+        });
+        window.addEventListener('error', event => {
+          if (finished) return;
+          const target = event.target;
+          if (target instanceof HTMLScriptElement || (target instanceof HTMLLinkElement
+            && target.rel === 'stylesheet')) phase = 'resource-failed';
+          else if (event instanceof ErrorEvent) phase = 'runtime-failed';
+          else return;
+          tick();
+        }, true);
+        window.addEventListener('pageshow', () => {
+          // A suspended page may resume before its original startup completes.
+          if (!finished) tick();
+        });
+        timer = setInterval(tick, 250);
+      })();
+    </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <script>
       // iOS uses the document background to paint system-owned safe-area chrome.
@@ -96,12 +171,16 @@
     <link href="https://fontsapi.zeoseven.com/507/main/result.css" onload="this.rel='stylesheet'" rel="preload" as="style" crossorigin />
     <noscript><link rel="stylesheet" href="https://fontsapi.zeoseven.com/507/main/result.css" /></noscript>
     <title>幽幽机</title>
-    <script type="module" crossorigin src="./assets/index-BOCyXTS4.js"></script>
+    <script type="module" crossorigin src="./assets/index-Co8gJ3LW.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/react-runtime-CsPkwV9P.js">
-    <link rel="modulepreload" crossorigin href="./assets/memory-engine-Dyd9MPqD.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-cuBMKHMZ.css">
+    <link rel="modulepreload" crossorigin href="./assets/memory-engine-Cn_hp4eO.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-DpOHoCOZ.css">
   </head>
   <body>
-    <div id="root"></div>
+    <aside id="xsj-startup" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:block!important;overflow:auto!important;background:#faf9f6!important;color:#292929!important;visibility:visible!important;opacity:1!important">
+      <p style="padding:40px 24px;font:16px system-ui">正在打开幽幽机…</p>
+      <noscript>浏览器未启用 JavaScript，暂时无法启动。请不要清除网站数据。</noscript>
+    </aside>
+    <div id="root"></div>
   </body>
 </html>
