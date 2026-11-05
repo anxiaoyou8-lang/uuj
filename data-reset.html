@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="robots" content="noindex"/><title>清空数据 · 幽幽机</title>  <script type="module" crossorigin src="./assets/dataReset-sduU5-_0.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/dataResetGuard-B3LN8o7D.js">
+  <link rel="stylesheet" crossorigin href="./assets/dataReset-CQQoks1M.css">
+</head>
+  <body>
+    <main>
+      <a id="back" href="./">← 返回幽幽机</a>
+      <p class="eyebrow">数据管理</p><h1>清空数据，保留登录</h1>
+      <p id="account" class="muted">正在核对登录账号…</p>
+      <section aria-label="清理范围">
+        <h2>这会清除什么？</h2>
+        <ul>
+          <li><strong>本浏览器全部幽幽机业务数据</strong>：聊天、角色、记忆、设置、图片及本地备份，包括以前登录过的其他幽幽机账号和未登录模式留下的数据。</li>
+          <li><strong>当前幽幽机账号的云端业务数据</strong>：其他幽幽机账号的云端数据不受影响。</li>
+        </ul>
+        <p>保留当前幽幽机账号的登录、恢复码和使用资格。消息 App 里的角色主号、小号及玩家账号属于业务数据，会一起清除。</p>
+        <p>其他设备的本地旧副本不会被远程删除，但会停止同步，避免把旧数据传回来。已下载的文件、GitHub 备份和服务器运维备份不在此清理范围内。</p>
+      </section>
+      <section class="warning"><h2>清空后不能在应用内撤销</h2><p>需要保留内容时，请先返回「设置 → 备份与恢复」导出备份。继续前请关闭其他幽幽机页面和已安装的应用窗口。</p><a id="backup" href="./">返回应用备份</a></section>
+      <p id="status" role="status" aria-live="polite">正在读取清理状态…</p>
+      <form id="confirm-form">
+        <label class="check"><input id="scope-confirm" type="checkbox"/>我确认本浏览器里其他幽幽机账号的本地数据也会被清除，所需内容已备份或无需保留。</label>
+        <label for="confirmation">请输入「清空本地和云端数据」确认</label>
+        <input id="confirmation" autocomplete="off" spellcheck="false" placeholder="清空本地和云端数据"/>
+        <button id="submit" type="submit" disabled>确认清空</button>
+      </form>
+      <button id="retry" type="button" hidden>重新核对状态</button>
+      <a id="done" class="done" href="./" hidden>进入幽幽机</a>
+    </main>
+  </body>
+</html>

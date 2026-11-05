@@ -32,7 +32,7 @@
           if (!host) return;
           if (!panel) {
             panel = host.attachShadow({ mode: 'open' });
-            panel.innerHTML = '<style>:host{color-scheme:light}*{box-sizing:border-box}section{font:16px/1.6 system-ui,sans-serif;color:#292929;background:#faf9f6;min-height:100%;padding:calc(40px + env(safe-area-inset-top,0px)) 24px 32px;overflow-wrap:anywhere}h1{font-size:22px;margin:0 0 20px}p{margin:12px 0}small{color:#666}button{font:inherit;padding:10px 16px;border:1px solid #d3d0cc;border-radius:12px;background:white;color:#292929;min-height:44px;cursor:pointer}[hidden]{display:none!important}</style><section aria-label="启动状态"><h1>幽幽机</h1><p id="status" role="status" aria-live="polite"></p><div id="help" hidden><p>启动比平时久一些。可以先关闭其他幽幽机页面，再重新载入。</p><p>此页面不会清除聊天、记忆或登录数据。请不要卸载 PWA 或清除网站数据。</p><button type="button">重新载入（保留数据）</button><p><small id="code"></small></p></div></section>';
+            panel.append(document.getElementById('xsj-startup-template').content.cloneNode(true));
             panel.querySelector('button').addEventListener('click', () => {
               // Cache-bust only the HTML URL; keep the origin, auth callback
               // parameters and all storage. No automatic retry/reload loop.
@@ -49,17 +49,47 @@
             if (rect.width > 0 && rect.height > 0 && style.display !== 'none'
               && style.visibility !== 'hidden' && Number(style.opacity) > 0) {
               finished = true;
-              host.style.setProperty('display', 'none', 'important');
+              const progress = panel.getElementById('progress');
+              progress.dataset.phase = 'complete';
+              progress.style.setProperty('--progress', '1');
+              progress.setAttribute('aria-valuenow', '4');
+              progress.setAttribute('aria-valuetext', '已就绪');
+              host.style.setProperty('transition', 'opacity 180ms ease', 'important');
+              const dismiss = () => {
+                host.style.setProperty('display', 'none', 'important');
+                // Start the greeting only after the loading overlay has left.
+                window.dispatchEvent(new Event('xsj-startup-dismissed'));
+              };
+              if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                dismiss();
+              } else {
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                  host.style.setProperty('opacity', '0', 'important');
+                  setTimeout(dismiss, 200);
+                }));
+              }
               clearInterval(timer);
               return;
             }
           }
           const label = labels[phase];
           const slow = Date.now() - since >= 10000 || /failed$/.test(phase);
-          panel.getElementById('status').textContent = label[0] + '…';
+          const failed = /failed$/.test(phase);
+          const progress = panel.getElementById('progress');
+          const step = { 'local-data': 1, memory: 2, render: 3 }[phase];
+          progress.dataset.phase = phase;
+          progress.setAttribute('aria-valuetext', label[0]);
+          if (step !== undefined) {
+            progress.style.setProperty('--progress', String(step / 4));
+            progress.setAttribute('aria-valuenow', String(step));
+          } else {
+            progress.removeAttribute('aria-valuenow');
+          }
+          progress.hidden = failed;
+          panel.getElementById('status').textContent = failed ? label[0] : '加载稍久，请稍候';
           panel.getElementById('help').hidden = !slow;
           // Fixed diagnostic codes only: no chat, user IDs, URL queries or tokens.
-          panel.getElementById('code').textContent = '诊断码：' + label[1] + ' · 启动检查 20261016';
+          panel.getElementById('code').textContent = label[1];
         }
         window.addEventListener('xsj-startup-phase', event => {
           if (finished || !Object.prototype.hasOwnProperty.call(labels, event.detail)) return;
@@ -171,16 +201,52 @@
     <link href="https://fontsapi.zeoseven.com/507/main/result.css" onload="this.rel='stylesheet'" rel="preload" as="style" crossorigin />
     <noscript><link rel="stylesheet" href="https://fontsapi.zeoseven.com/507/main/result.css" /></noscript>
     <title>幽幽机</title>
-    <script type="module" crossorigin src="./assets/index-Co8gJ3LW.js"></script>
+    <script type="module" crossorigin src="./assets/index-ChOv4XLH.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/dataResetGuard-B3LN8o7D.js">
     <link rel="modulepreload" crossorigin href="./assets/react-runtime-CsPkwV9P.js">
-    <link rel="modulepreload" crossorigin href="./assets/memory-engine-Cn_hp4eO.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-DpOHoCOZ.css">
+    <link rel="modulepreload" crossorigin href="./assets/memory-engine-DPDQ0vna.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-bixbHb2S.css">
   </head>
   <body>
-    <aside id="xsj-startup" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:block!important;overflow:auto!important;background:#faf9f6!important;color:#292929!important;visibility:visible!important;opacity:1!important">
-      <p style="padding:40px 24px;font:16px system-ui">正在打开幽幽机…</p>
+    <template id="xsj-startup-template">
+      <style>
+        :host { color: var(--text, #191c1e); }
+        * { box-sizing: border-box; }
+        section { min-height: 100%; display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        .center { width: min(100%, 240px); text-align: center; position: relative; }
+        h1 { margin: 0 0 28px; font-size: 25px; line-height: 1.4; font-weight: 500; letter-spacing: .16em; text-indent: .16em; }
+        #progress { height: 3px; width: 160px; margin: 0 auto; border-radius: 4px; background: color-mix(in srgb, currentColor 10%, transparent); overflow: hidden; }
+        .fill { height: 100%; border-radius: inherit; background: currentColor; opacity: .7; transform-origin: left; transform: scaleX(var(--progress, .25)); transition: transform 320ms ease; }
+        [data-phase="resources"] .fill { width: 35%; transform: none; animation: travel 1.6s ease-in-out infinite; }
+        #help { position: absolute; top: calc(100% + 24px); width: 100%; }
+        p { margin: 0 0 14px; color: var(--muted, #5f6368); }
+        button { font: inherit; min-height: 44px; padding: 8px 20px; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+        button:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
+        button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+        details { margin-top: 12px; font-size: 12px; color: var(--muted, #5f6368); }
+        summary { cursor: pointer; }
+        #code { display: block; margin-top: 8px; font-size: 11px; letter-spacing: .04em; }
+        [hidden] { display: none !important; }
+        @keyframes travel { 0% { transform: translateX(-110%); } 100% { transform: translateX(390%); } }
+        @media (prefers-reduced-motion: reduce) { .fill { transition: none; } [data-phase="resources"] .fill { animation: none; transform: translateX(90%); } }
+        @media (max-height: 480px) { section { min-height: 400px; } }
+      </style>
+      <section aria-label="启动状态">
+        <div class="center">
+          <h1>loading</h1>
+          <div id="progress" role="progressbar" aria-label="启动进度" aria-valuemin="0" aria-valuemax="4" data-phase="resources"><div class="fill"></div></div>
+          <div id="help" hidden>
+            <p id="status" role="status" aria-live="polite"></p>
+            <button type="button">重新加载</button>
+            <details><summary>查看详情</summary>可关闭其他幽幽机页面后重试。请勿清除网站数据或卸载应用。<small id="code"></small></details>
+          </div>
+        </div>
+      </section>
+    </template>
+    <aside id="xsj-startup" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:block!important;overflow:auto!important;background:var(--app-system-background,#f8f9fb)!important;visibility:visible!important;opacity:1!important">
       <noscript>浏览器未启用 JavaScript，暂时无法启动。请不要清除网站数据。</noscript>
     </aside>
-    <div id="root"></div>
+    <div id="root"></div>
+    <script>window.dispatchEvent(new CustomEvent('xsj-startup-phase', { detail: 'resources' }));</script>
   </body>
 </html>
