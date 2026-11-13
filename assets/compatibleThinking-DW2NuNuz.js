@@ -1,0 +1,1 @@
+function e(e,t,n){if("off"!==n)return{};const r=e.trim().toLowerCase().split("/").at(-1)??"";if(!/^deepseek-(?:flash|v4(?:[.-]\d+)?-(?:flash|pro)|v3[.-][12](?:-exp)?)(?:$|[:@])/.test(r))return{};let o=!1;try{o="openrouter.ai"===new URL(t).hostname}catch{}return o?{reasoning:{enabled:!1}}:{thinking:{type:"disabled"}}}export{e as compatibleThinkingOptions};
